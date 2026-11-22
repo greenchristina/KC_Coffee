@@ -1,0 +1,6 @@
+pick,rank,GEOID,NAMELSAD,place,county,score,median_income,growth_pct,jobs,jobs_per_sqmi,reach_pop_10,cafes_10,chain_cafes_10,cafes_per_10k,nearest_cafe_min,top25_share,median_rank_alt,lat,lon,near
+1,1.0,20091053418,Census Tract 534.18,Overland Park,Johnson KS,78.3333,130511.0,21.156,4093,2045.6936,193555,25,20,1.2916,1.8143,0.899,7.0,38.84,-94.67702,West 159th Street & Antioch Road
+2,2.0,20091053201,Census Tract 532.01,Overland Park,Johnson KS,78.2495,108333.0,24.9906,36249,13603.1947,245358,43,26,1.7525,2.1203,0.91,5.0,38.91452,-94.65442,West 119th Street & Nall Avenue
+3,5.0,20091053005,Census Tract 530.05,Lenexa,Johnson KS,76.7505,112778.0,10.3173,3624,4359.433,308619,57,39,1.8469,1.6442,0.777,9.0,38.93103,-94.74619,Pflumm Road & College Boulevard
+4,6.0,20091053508,Census Tract 535.08,Olathe,Johnson KS,76.4711,123889.0,30.3071,4365,2852.2802,155268,22,16,1.4169,1.4545,0.794,10.0,38.86278,-94.79312,South Ridgeview Road & East 151st Street
+5,16.0,29095015702,Census Tract 157.02,Kansas City,Jackson MO,71.5642,80876.0,123.2657,12624,67464.1097,294004,93,10,3.1632,0.1493,0.62,15.0,39.10225,-94.58077,Grand Boulevard & Main Street

@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kansas City Coffeehouse Site Selection | Portfolio Project</title>
+<meta name="description" content="A three-part analytics project: profiling public data in SQL, scoring 551 Kansas City census tracts in Python and R Shiny, and a one-page decision memo recommending five coffeehouse sites.">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root {
+    --green: #006241;       /* primary */
+    --green-deep: #00432c;  /* darker step of the primary, for text on light tints */
+    --lime: #baf97c;        /* accent */
+    --sage: #b8d9b8;
+    --mint: #d3f2e8;
+    --page: #f5faf7;
+    --card: #ffffff;
+    --ink: #17201c;
+    --muted: #4c5a54;
+    --line: #d6e6de;
+    --chain: #eb6834;
+    --indep: #6250d6;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink);
+         background: var(--page); line-height: 1.6; font-size: 17px; }
+  a { color: var(--green); }
+  a:hover { color: var(--green-deep); }
+
+  /* ---------- header + page selectors ---------- */
+  header { position: sticky; top: 0; z-index: 1000; background: var(--green); color: #fff;
+           box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+  .bar { max-width: 1120px; margin: 0 auto; padding: 14px 24px; display: flex; align-items: center;
+         justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .brand { font-weight: 700; font-size: 18px; letter-spacing: .2px; display: flex; align-items: center; gap: 10px; }
+  .brand .dot { width: 28px; height: 28px; border-radius: 50%; background: var(--lime); color: var(--green);
+                display: grid; place-items: center; font-size: 11px; font-weight: 800; }
+  nav { display: flex; gap: 6px; flex-wrap: wrap; }
+  nav a { color: #fff; text-decoration: none; padding: 7px 14px; border-radius: 999px; font-size: 15px;
+          font-weight: 600; border: 1px solid rgba(255,255,255,.25); transition: background .15s; }
+  nav a:hover { background: rgba(255,255,255,.12); color: #fff; }
+  nav a.active { background: var(--lime); color: var(--green-deep); border-color: var(--lime); }
+  nav a .n { opacity: .75; margin-right: 4px; }
+
+  /* ---------- layout ---------- */
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 24px 64px; }
+  .page { display: none; animation: fade .25s ease; }
+  .page.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; margin: 22px 0; }
+  h1 { font-size: clamp(30px, 4.4vw, 46px); line-height: 1.15; margin: 8px 0 18px; color: var(--green-deep); }
+  h2 { font-size: 30px; line-height: 1.2; margin: 6px 0 12px; color: var(--green-deep); }
+  h3 { font-size: 20px; margin: 0 0 12px; color: var(--green-deep); }
+  .eyebrow { text-transform: uppercase; letter-spacing: 1.4px; font-size: 13px; font-weight: 700; color: var(--green); }
+  .lead { font-size: 19px; color: var(--ink); max-width: 860px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 14px; }
+
+  .hero { background: linear-gradient(135deg, var(--mint), #fff 70%); border: 1px solid var(--line);
+          border-radius: 20px; padding: 44px 40px; position: relative; overflow: hidden; }
+  .hero::after { content: ""; position: absolute; right: -80px; top: -80px; width: 260px; height: 260px;
+                 border-radius: 50%; background: var(--sage); opacity: .45; }
+  .hero > * { position: relative; z-index: 1; }
+
+  /* workflow */
+  .flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 12px; align-items: stretch; margin-top: 8px; }
+  .step { background: var(--card); border: 1px solid var(--line); border-top: 6px solid var(--green);
+          border-radius: var(--radius); padding: 22px; display: flex; flex-direction: column; }
+  .step .num { width: 34px; height: 34px; border-radius: 50%; background: var(--green); color: var(--lime);
+               display: grid; place-items: center; font-weight: 800; margin-bottom: 10px; }
+  .step dl { margin: 6px 0 16px; font-size: 15px; }
+  .step dt { font-weight: 700; color: var(--green-deep); margin-top: 8px; }
+  .step dd { margin: 0; color: var(--muted); }
+  .step .go { margin-top: auto; align-self: flex-start; }
+  .arrow { display: grid; place-items: center; color: var(--green); font-size: 28px; font-weight: 800; }
+
+  .btn { display: inline-block; background: var(--green); color: #fff; text-decoration: none; font-weight: 700;
+         padding: 9px 16px; border-radius: 999px; font-size: 15px; }
+  .btn:hover { background: var(--green-deep); color: var(--lime); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .stat { background: var(--green); color: #fff; border-radius: var(--radius); padding: 18px 20px; }
+  .stat b { display: block; font-size: 32px; line-height: 1.1; color: var(--lime); }
+  .stat span { font-size: 14px; opacity: .92; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { background: var(--mint); color: var(--green-deep); border: 1px solid var(--sage); border-radius: 999px;
+          padding: 4px 12px; font-size: 14px; font-weight: 600; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .two > .card { margin: 0; }
+
+  ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 0; }
+  ol.steps li { counter-increment: s; position: relative; padding: 0 0 14px 46px; }
+  ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 30px; height: 30px;
+                        border-radius: 8px; background: var(--mint); color: var(--green-deep); font-weight: 800;
+                        display: grid; place-items: center; border: 1px solid var(--sage); }
+  ol.steps code { background: var(--mint); padding: 1px 6px; border-radius: 5px; font-size: 14px; }
+
+  .callout { display: flex; gap: 24px; align-items: center; background: var(--green); color: #fff;
+             border-radius: var(--radius); padding: 24px 28px; margin: 22px 0; }
+  .callout .big { font-size: 46px; font-weight: 800; color: var(--lime); white-space: nowrap; line-height: 1; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th { text-align: left; background: var(--mint); color: var(--green-deep); padding: 10px 12px; font-size: 14px;
+       border-bottom: 2px solid var(--sage); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .table-wrap { overflow-x: auto; }
+
+  .deliverables { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .deliverables a { display: block; border: 1px solid var(--line); border-left: 5px solid var(--green); border-radius: 10px;
+                    padding: 10px 14px; text-decoration: none; color: var(--ink); background: #fff; }
+  .deliverables a:hover { background: var(--mint); }
+  .deliverables b { color: var(--green-deep); display: block; font-size: 15px; }
+  .deliverables span { color: var(--muted); font-size: 14px; }
+
+  .shows { background: var(--mint); border: 1px solid var(--sage); border-radius: var(--radius); padding: 22px 26px; }
+  .shows h3 { margin-bottom: 6px; }
+  .shows ul { margin: 0; padding-left: 20px; }
+  .shows li { margin: 6px 0; }
+
+  .bridge { border-left: 5px solid var(--lime); background: #fff; padding: 14px 18px; border-radius: 0 10px 10px 0; }
+
+  #map, #memoMap { height: 640px; border-radius: 10px; border: 1px solid var(--line); }
+  #memoMap { height: 340px; }
+  .legend { background: #fff; padding: 10px 12px; border-radius: 8px; font-size: 13px; line-height: 1.5;
+            box-shadow: 0 1px 6px rgba(0,0,0,.15); }
+  .legend i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; margin-right: 6px; vertical-align: -2px; }
+  .legend i.c { border-radius: 50%; border: 1.5px solid #fff; box-shadow: 0 0 0 1px #ccc; }
+  .pin { width: 28px; height: 28px; border-radius: 50%; background: var(--lime); border: 3px solid var(--green);
+         color: var(--green-deep); font-weight: 800; display: grid; place-items: center; font-size: 14px;
+         box-shadow: 0 1px 6px rgba(0,0,0,.35); }
+  figure { margin: 0; }
+  figure img { width: 100%; border-radius: 10px; border: 1px solid var(--line); display: block; }
+  figcaption { font-size: 14px; color: var(--muted); margin-top: 8px; }
+
+  /* memo as a document */
+  .memo { background: #fff; border: 1px solid var(--line); border-top: 10px solid var(--green); border-radius: var(--radius);
+          padding: 40px 44px; box-shadow: 0 6px 24px rgba(0,67,44,.08); }
+  .memo .meta { font-size: 14px; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 18px; }
+  .memo .bottomline { background: var(--mint); border-left: 5px solid var(--green); padding: 14px 18px; border-radius: 0 10px 10px 0; }
+  .memo h4 { color: var(--green-deep); font-size: 17px; margin: 22px 0 6px; }
+  .memo ul { padding-left: 20px; margin: 6px 0; }
+  .memo li { margin: 5px 0; }
+  .memo td:first-child { font-weight: 800; color: var(--green); }
+  .memo em { color: var(--green-deep); }
+
+  footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; text-align: center; padding: 24px; }
+
+  @media (max-width: 860px) {
+    .flow { grid-template-columns: 1fr; } .arrow { transform: rotate(90deg); }
+    .stats { grid-template-columns: 1fr 1fr; } .two, .deliverables { grid-template-columns: 1fr; }
+    .hero, .memo { padding: 28px 22px; } .callout { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div class="brand"><span class="dot">KC</span> Kansas City Coffeehouse Site Selection</div>
+    <nav aria-label="Project sections">
+      <a href="#overview" data-nav="overview">Overview</a>
+      <a href="#quality" data-nav="quality"><span class="n">1</span>Data Quality</a>
+      <a href="#scoring" data-nav="scoring"><span class="n">2</span>Site Scoring</a>
+      <a href="#memo" data-nav="memo"><span class="n">3</span>Decision Memo</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- =====================================================================  OVERVIEW -->
+<section class="page" id="page-overview">
+  <div class="hero">
+    <div class="eyebrow">Portfolio project · Kansas City metro · public data</div>
+    <h1>Where should the next coffeehouses in Kansas City open?</h1>
+    <p class="lead">I built this three-part project to answer a question a coffee company's expansion team really faces:
+      where in the Kansas City metro should the next stores go? I used only free public data (Census income, population
+      and job counts, plus OpenStreetMap cafes and roads) and worked through it the way I would on the job. First, I
+      profiled the raw data in SQL to find what would quietly break the analysis: one Census error code alone turned
+      average household income into <b>−$25 million</b>. Second, I applied those fixes in Python, scored all 551 census
+      tracts on income, growth, daytime workers, drive-time reach and competition, and built an interactive R Shiny map
+      to explore the results. Third, I turned the ranking into a one-page memo that recommends five sites, with tradeoffs
+      and risks, for a reader who will never open the code. Each part feeds the next, and each has its own page above.</p>
+  </div>
+
+  <h2 style="margin-top:36px">The workflow</h2>
+  <div class="flow">
+    <div class="step">
+      <div class="num">1</div>
+      <h3>Check the data</h3>
+      <dl>
+        <dt>Question</dt><dd>Is the public data reliable enough to support a site decision?</dd>
+        <dt>Tools</dt><dd>Python, DuckDB, SQL</dd>
+        <dt>Deliverable</dt><dd>Data quality report with seven checks and five fixes</dd>
+      </dl>
+      <a class="btn go" href="#quality">See part 1 →</a>
+    </div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="step">
+      <div class="num">2</div>
+      <h3>Score every tract</h3>
+      <dl>
+        <dt>Question</dt><dd>Which of the 551 neighborhoods are the strongest candidates?</dd>
+        <dt>Tools</dt><dd>Python, GeoPandas, OSMnx, R Shiny, Leaflet</dd>
+        <dt>Deliverable</dt><dd>Reproducible scoring pipeline and an interactive map</dd>
+      </dl>
+      <a class="btn go" href="#scoring">See part 2 →</a>
+    </div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="step">
+      <div class="num">3</div>
+      <h3>Recommend action</h3>
+      <dl>
+        <dt>Question</dt><dd>Where should the next five stores open, and what could go wrong?</dd>
+        <dt>Tools</dt><dd>Plain language, one page</dd>
+        <dt>Deliverable</dt><dd>Decision memo for non-technical leaders</dd>
+      </dl>
+      <a class="btn go" href="#memo">See part 3 →</a>
+    </div>
+  </div>
+
+  <div class="stats" style="margin-top:26px">
+    <div class="stat"><b>551</b><span>census tracts profiled and scored</span></div>
+    <div class="stat"><b>324</b><span>cafes cleaned, de-duplicated and classified</span></div>
+    <div class="stat"><b>1,000</b><span>alternative weightings tested for robustness</span></div>
+    <div class="stat"><b>5</b><span>sites recommended, with tradeoffs and risks</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Skills this project demonstrates</h3>
+    <div class="chips">
+      <span class="chip">SQL data profiling</span><span class="chip">Data quality & cleaning</span>
+      <span class="chip">Python / pandas</span><span class="chip">GeoPandas & spatial joins</span>
+      <span class="chip">Network drive-time analysis</span><span class="chip">Census & LODES data</span>
+      <span class="chip">Multi-factor scoring</span><span class="chip">Sensitivity analysis</span>
+      <span class="chip">R Shiny & Leaflet</span><span class="chip">Recommending actions</span>
+      <span class="chip">Writing for non-technical audiences</span>
+    </div>
+    <p class="small muted" style="margin:16px 0 0">Data: U.S. Census Bureau (American Community Survey 5-year estimates,
+      LEHD LODES job counts, TIGER boundaries) and © OpenStreetMap contributors. Six counties: Johnson and Wyandotte (KS);
+      Jackson, Clay, Platte and Cass (MO).</p>
+  </div>
+</section>
+
+<!-- =====================================================================  PART 1 -->
+<section class="page" id="page-quality">
+  <div class="eyebrow">Part 1 · Data quality profile</div>
+  <h2>Can the public data be trusted?</h2>
+  <p class="lead">Before building any model, I wanted to know what in the raw data would mislead it. I loaded the Census
+    and OpenStreetMap data into DuckDB <b>without cleaning it</b>, so the problems would still be visible, and ran seven
+    SQL checks. Most of the data was solid, but two issues would have quietly wrecked a site-selection model: Census error
+    codes hiding in the income column, and coffee chains spelled three different ways.</p>
+
+  <div class="callout">
+    <div class="big">−$25.3M</div>
+    <div>The average household income across the 551 tracts when Census error codes (−666,666,666) are left in the data.
+      Converting them to blanks gives the true average: <b>$85,827</b>. That single fix mattered more than any other.</div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <h3>How I did it</h3>
+      <ol class="steps">
+        <li><b>Downloaded</b> tract income and population from the Census API and every cafe in the metro from
+          OpenStreetMap, using Python.</li>
+        <li><b>Loaded the raw data</b> into DuckDB exactly as delivered, keeping error codes as numbers.</li>
+        <li><b>Profiled it in SQL</b>: duplicates, error codes, empty tracts, outliers, missing fields and name spellings.</li>
+        <li><b>Wrote up the impact</b> of each issue and a fix, ranked by how much it would change the answer.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3>What I found</h3>
+      <ul style="margin:0;padding-left:20px">
+        <li><b>21 tracts (3.8%)</b> carry a Census error code instead of an income.</li>
+        <li><b>14 tracts have no residents</b> (airports, parks, industrial land) and <b>7 more</b> have 6,608 residents but a
+          suppressed income. These need different handling.</li>
+        <li><b>Chain counts were split</b>: Scooter's appeared as 25 + 3 + 2 locations under three spellings.</li>
+        <li><b>The OSM “brand” tag is on only 36.7% of cafes</b>, so it can't be used to identify chains.</li>
+        <li><b>Basic integrity is good</b>: no duplicate tract IDs and no missing coordinates.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The seven checks</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Check</th><th>What I found</th><th>Why it matters</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Duplicate tract IDs</td><td>0 of 551</td><td>The join key is reliable</td><td>None needed</td></tr>
+          <tr><td>2</td><td>Census error codes in income</td><td>21 tracts</td><td>Average income becomes <span style="white-space:nowrap">−$25.3M</span></td><td>Convert to blank before any math</td></tr>
+          <tr><td>3</td><td>Zero-population tracts</td><td>14 tracts</td><td>No residents means no demand signal</td><td>Exclude from scoring</td></tr>
+          <tr><td>4</td><td>Income outliers</td><td>14 high; 2 at the $250,001 cap</td><td>Real, but the cap hides true values</td><td>Score by rank, flag capped tracts</td></tr>
+          <tr><td>5</td><td>Cafes missing name or location</td><td>0 locations, 2 names</td><td>Negligible</td><td>Leave unnamed cafes out of chain counts</td></tr>
+          <tr><td>6</td><td>Same cafe mapped twice</td><td>1 pair (7 Brew)</td><td>Small overcount</td><td>Keep one record</td></tr>
+          <tr><td>7</td><td>Inconsistent cafe names</td><td>Scooter's ×3 spellings, Dutch Bros ×2</td><td>Chain counts understated</td><td>Standardize with a name-mapping table</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="bridge" style="margin:18px 0 0"><b>How this fed part 2:</b> every fix in this table became a cleaning rule in
+      the scoring pipeline. Part 2 prints each count next to the number this report found, and they all match.</p>
+  </div>
+
+  <div class="card">
+    <h3>Deliverables</h3>
+    <ul class="deliverables">
+      <li><a data-src="kc-coffee-data-quality/docs/data_quality_report.md"><b>Data quality report</b><span>Seven checks, impact and recommendations</span></a></li>
+      <li><a data-src="kc-coffee-data-quality/README.md"><b>Project README</b><span>Question, findings, how to run it</span></a></li>
+      <li><a data-src="kc-coffee-data-quality/sql/01_profile_acs.sql"><b>SQL: Census tract profile</b><span>Error codes, empty tracts, outliers</span></a></li>
+      <li><a data-src="kc-coffee-data-quality/sql/02_profile_osm.sql"><b>SQL: cafe profile</b><span>Completeness, duplicates, name variants</span></a></li>
+      <li><a data-src="kc-coffee-data-quality/src/01_download.py"><b>Python: data download</b><span>Census API and OpenStreetMap Overpass</span></a></li>
+      <li><a data-src="kc-coffee-data-quality/src/02_load_duckdb.py"><b>Python: load to DuckDB</b><span>Raw load, no cleaning, on purpose</span></a></li>
+    </ul>
+  </div>
+
+  <div class="shows">
+    <h3>What this part shows</h3>
+    <ul>
+      <li>Profiled 551 census tracts and 327 cafe records with SQL in DuckDB, catching Census error codes that turned
+        average household income from $85,827 into −$25.3 million.</li>
+      <li>Found chain counts understated by up to 17% (Scooter's: 25 counted vs. 30 actual) because of inconsistent names
+        and a brand tag present on only 36.7% of records, and designed a name-mapping fix.</li>
+      <li>Wrote a data quality report with impact-ranked recommendations that became the cleaning rules for the model.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- =====================================================================  PART 2 -->
+<section class="page" id="page-scoring">
+  <div class="eyebrow">Part 2 · Site-suitability model</div>
+  <h2>Scoring every neighborhood in the metro</h2>
+  <p class="lead">With clean data, I scored all 551 census tracts on the five things that drive coffee sales: income,
+    population growth, daytime workers, how many people can reach the spot within a 10-minute drive, and how crowded the
+    area already is with coffee shops. I built the pipeline in Python with GeoPandas, calculated real drive times on the
+    OpenStreetMap road network, and put the result in an R Shiny app where anyone can change the weights and watch the
+    ranking update.</p>
+
+  <div class="card">
+    <h3>Suitability score by census tract (default weights)</h3>
+    <p class="small muted" style="margin-top:-4px">Darker green means a stronger candidate. Numbered pins are the five
+      sites recommended in part 3. Hover over a tract for its score; switch the cafe layer on to see competitors.</p>
+    <div id="map" role="img" aria-label="Map of Kansas City census tracts shaded by suitability score"></div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <h3>The workflow, step by step</h3>
+      <ol class="steps">
+        <li><b>Download</b> 2023 tract boundaries, Census job counts, a 2010→2020 tract crosswalk and 2014-18 population. <code>01</code></li>
+        <li><b>Clean</b> using every fix from part 1: error codes, empty tracts, name mapping, duplicates. <code>02</code></li>
+        <li><b>Build features</b>: population growth across two Census geographies, and jobs per square mile. <code>03</code></li>
+        <li><b>Measure drive times</b> on a 109,000-intersection road network to build a 10-minute trade area for every tract. <code>04</code></li>
+        <li><b>Score</b>: turn each factor into a percentile, weight it, and scale to 0-100. <code>05</code></li>
+        <li><b>Recommend</b> five spaced-out sites and test them against 1,000 alternative weightings. <code>06</code></li>
+        <li><b>Explore</b> it all in the R Shiny app. <code>app.R</code></li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3>The five factors</h3>
+      <table>
+        <thead><tr><th>Factor</th><th>How I measured it</th><th class="num">Weight</th></tr></thead>
+        <tbody>
+          <tr><td>Income</td><td>Median household income</td><td class="num">25%</td></tr>
+          <tr><td>Growth</td><td>Population change, 2014-18 to 2019-23</td><td class="num">15%</td></tr>
+          <tr><td>Daytime workers</td><td>Jobs per square mile in the tract</td><td class="num">20%</td></tr>
+          <tr><td>Drive time</td><td>Residents within a 10-minute drive</td><td class="num">20%</td></tr>
+          <tr><td>Competition</td><td>Coffee shops per 10,000 residents in that drive (fewer is better)</td><td class="num">20%</td></tr>
+        </tbody>
+      </table>
+      <p class="small muted" style="margin:12px 0 0">I scored each factor as a percentile rank, not a raw value, so a
+        handful of extreme tracts (the $250,001 income cap, downtown's 67,000 jobs per square mile) can't dominate.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The interactive app (R Shiny)</h3>
+    <figure>
+      <img src="assets/shiny_app.png" alt="Screenshot of the R Shiny app: weight sliders on the left, a tract map shaded by score with cafe markers, and a table of the top 10 tracts" loading="lazy">
+      <figcaption>Sliders re-weight the five factors and the map and top-10 table update instantly. You can filter by county,
+        click any tract for its full profile and data-quality flags, and download the ranking as CSV. GitHub Pages can't
+        run R, so this is a screenshot; the map above is a static version. To run the app:
+        <code>Rscript -e "shiny::runApp('kc-coffee-site-suitability/shiny')"</code>.</figcaption>
+    </figure>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <h3>What the model found</h3>
+      <ul style="margin:0;padding-left:20px">
+        <li><b>All of the top 15 tracts are in Johnson County</b>, and 42 of the top 50.</li>
+        <li><b>The leaders are not empty of coffee.</b> They still have 22-57 competitors within 10 minutes; they rank high
+          because there are many residents per coffee shop.</li>
+        <li><b>The weights change the story.</b> Weight only daytime workers and low competition and the top five move
+          to downtown Kansas City and Wyandotte County.</li>
+        <li><b>Suburbs are chain territory</b> (20 of 25 nearby shops at the #1 tract are chains); downtown is almost all independents.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Part 1's fixes, verified</h3>
+      <table>
+        <thead><tr><th>Issue</th><th class="num">Report</th><th class="num">Pipeline</th></tr></thead>
+        <tbody>
+          <tr><td>Census error codes set to blank</td><td class="num">21</td><td class="num">21</td></tr>
+          <tr><td>Empty tracts excluded</td><td class="num">14</td><td class="num">14</td></tr>
+          <tr><td>Missing incomes filled from neighbors</td><td class="num">7</td><td class="num">7</td></tr>
+          <tr><td>Scooter's locations after name mapping</td><td class="num">30</td><td class="num">30</td></tr>
+          <tr><td>Duplicate cafe points removed</td><td class="num">1</td><td class="num">3*</td></tr>
+        </tbody>
+      </table>
+      <p class="small muted" style="margin:10px 0 0">*Standardizing names caught two duplicates the report couldn't: the
+        same cafe mapped twice under different spellings.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Deliverables</h3>
+    <ul class="deliverables">
+      <li><a data-src="kc-coffee-site-suitability/README.md"><b>Project README</b><span>Method, findings, limitations, memo</span></a></li>
+      <li><a data-src="kc-coffee-site-suitability/shiny/app.R"><b>R Shiny app</b><span>Live re-weighting map and ranking</span></a></li>
+      <li><a data-src="kc-coffee-site-suitability/src/02_clean.py"><b>Python: cleaning</b><span>Part 1's fixes, with counts checked</span></a></li>
+      <li><a data-src="kc-coffee-site-suitability/src/04_drive_times.py"><b>Python: drive times</b><span>OSMnx road network + Dijkstra</span></a></li>
+      <li><a data-src="kc-coffee-site-suitability/src/05_score.py"><b>Python: scoring</b><span>Percentiles and weighted score</span></a></li>
+      <li><a data-src="kc-coffee-site-suitability/data/processed/tracts_scored.csv"><b>Scored tracts (CSV)</b><span>Every factor, percentile and flag</span></a></li>
+    </ul>
+  </div>
+
+  <div class="shows">
+    <h3>What this part shows</h3>
+    <ul>
+      <li>Built a reproducible Python/GeoPandas pipeline that scores 551 census tracts on five factors, including
+        10-minute drive-time trade areas calculated on a 109,000-intersection OpenStreetMap road network.</li>
+      <li>Reconciled 2010 and 2020 Census geographies with an official crosswalk to measure population growth, and joined
+        Census LODES job counts to capture daytime workers.</li>
+      <li>Built an R Shiny + Leaflet app that lets non-technical users re-weight the model and see the ranking update
+        live, and tested the top sites' stability across 1,000 alternative weightings.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- =====================================================================  PART 3 -->
+<section class="page" id="page-memo">
+  <div class="eyebrow">Part 3 · Decision memo</div>
+  <h2>From 551 scores to five decisions</h2>
+  <p class="lead">A model only matters if someone can act on it. I wrote this memo for an expansion leader who has five
+    minutes and will never open the code: the recommendation comes first, every number is in plain terms, and the
+    tradeoffs and risks are stated as openly as the upside.</p>
+
+  <article class="memo">
+    <div class="meta"><b>To:</b> Expansion leadership &nbsp;·&nbsp; <b>Re:</b> Next five Kansas City locations &nbsp;·&nbsp; <b>Date:</b> November 2026</div>
+    <h2 style="font-size:26px;margin-top:0">Where to open the next 5 coffeehouses in KC, and why</h2>
+
+    <p class="bottomline"><b>Bottom line.</b> I recommend opening the next five coffeehouses in the five areas below: four
+      in fast-growing, high-income Johnson County suburbs and one in downtown Kansas City, Missouri. Each is at least
+      5 miles from the others, so the new stores will not compete with each other for the same customers.</p>
+
+    <div id="memoMap" role="img" aria-label="Map of the five recommended coffeehouse sites"></div>
+
+    <div class="table-wrap" style="margin-top:18px">
+      <table>
+        <thead><tr><th>#</th><th>Where</th><th>Why it stands out</th><th>What to watch</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><b>Overland Park</b><br><span class="small muted">W 159th St &amp; Antioch Rd</span></td>
+            <td>Highest score in the metro. Household income $131K, population up 21% in five years, and about 194,000 people
+              within a 10-minute drive, but only one coffee shop per 7,700 of them.</td>
+            <td>20 of the 25 nearby coffee shops are chains, so speed and drive-thru convenience will decide who wins.</td></tr>
+          <tr><td>2</td><td><b>Overland Park</b><br><span class="small muted">W 119th St &amp; Nall Ave</span></td>
+            <td>An office hub: 36,000 jobs in the area, the most in the metro, plus $108K income and 25% growth. Morning commuters and residents.</td>
+            <td>Busy field: 43 coffee shops nearby, 26 of them chains.</td></tr>
+          <tr><td>3</td><td><b>Lenexa</b><br><span class="small muted">Pflumm Rd &amp; College Blvd</span></td>
+            <td>The biggest customer base of the five: about 309,000 people within a 10-minute drive. Income $113K.</td>
+            <td>Most crowded suburban pick (57 coffee shops, 39 chains) and slower growth (10%).</td></tr>
+          <tr><td>4</td><td><b>Olathe</b><br><span class="small muted">S Ridgeview Rd &amp; E 151st St</span></td>
+            <td>The fastest-growing suburban pick (30%), income $124K, and the fewest competitors (22).</td>
+            <td>Smallest customer base today (155,000). This one is a bet that the growth continues.</td></tr>
+          <tr><td>5</td><td><b>Downtown Kansas City, MO</b><br><span class="small muted">Main St &amp; Grand Blvd</span></td>
+            <td>The densest daytime crowd in the metro (12,600 jobs packed into a few blocks), and the number of residents has more than doubled.</td>
+            <td>Very competitive: 93 coffee shops nearby, almost all independents, one practically next door. Needs a different format.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>How I chose them</h4>
+    <p style="margin:0">I scored all 551 neighborhoods (census tracts) in the six-county metro on five things that drive
+      coffee sales: income, population growth, daytime workers, how many people live within a 10-minute drive, and how many
+      coffee shops already serve them. I then took the highest-scoring areas, skipping any within 5 miles of a site already
+      chosen. Sites 1-4 stayed in the top 25 in 78-91% of 1,000 alternative ways of weighting those five factors, so they
+      do not depend on my exact choices. Site 5 did in 62%.</p>
+
+    <h4>Tradeoffs</h4>
+    <ul>
+      <li><b>Suburbs vs. downtown.</b> The four suburban sites win on income, growth and drive-time reach, and are built for
+        drive-thru traffic against chains. Downtown wins on weekday office workers and walk-in traffic, and competes against
+        local independents. It carries more risk, but it tests a second store format and a second market.</li>
+      <li><b>Concentration.</b> 42 of the top 50 areas are in Johnson County. Four stores there can share managers, supply
+        runs and marketing, but they tie most of the investment to one county's economy.</li>
+      <li><b>Proven vs. future demand.</b> Lenexa and the two Overland Park sites serve demand that already exists. Olathe
+        and downtown depend on growth continuing.</li>
+      <li><b>The weights are a judgment call.</b> I weighted income most heavily (25%). If leadership values daytime
+        workers more, more downtown and Jackson County sites rise; if it values income more, the list becomes almost all
+        Johnson County.</li>
+    </ul>
+
+    <h4>Risks and how to reduce them</h4>
+    <ul>
+      <li><b>The competitor count is a floor.</b> Public map data misses some coffee shops, so the real competition is
+        likely heavier. <em>Walk each area and count competitors before signing a lease.</em></li>
+      <li><b>Drive times assume no traffic.</b> Rush-hour access may be worse. <em>Check state traffic counts and which side
+        of the road morning commuters drive on.</em></li>
+      <li><b>Office attendance.</b> Downtown job counts show where people are employed, not how often they come into the
+        office. <em>Observe weekday morning foot traffic before committing to site 5.</em></li>
+      <li><b>What the data cannot see:</b> rent, visibility, parking, drive-thru permits, available buildings, and where our
+        own stores already are. <em>These need the real estate team.</em></li>
+    </ul>
+
+    <h4>Next steps</h4>
+    <p style="margin:0">(1) Two-week field visit to all five areas. (2) Pull listings and lease quotes near each
+      intersection. (3) Decide the downtown format before committing. (4) Open sites 1 and 2 first: they rank highest and
+      are the most stable under different weightings.</p>
+  </article>
+
+  <div class="card">
+    <h3>Deliverables</h3>
+    <ul class="deliverables">
+      <li><a data-src="kc-coffee-site-suitability/README.md"><b>Memo in the project README</b><span>The same memo, alongside the model it comes from</span></a></li>
+      <li><a data-src="kc-coffee-site-suitability/src/06_recommend.py"><b>Python: recommendations</b><span>5-mile spacing rule and 1,000-weighting robustness test</span></a></li>
+      <li><a data-src="kc-coffee-site-suitability/data/processed/recommendations.csv"><b>The five picks (CSV)</b><span>Every number quoted in the memo</span></a></li>
+    </ul>
+  </div>
+
+  <div class="shows">
+    <h3>What this part shows</h3>
+    <ul>
+      <li>Turned a 551-tract model into a one-page recommendation of five sites for non-technical leaders, leading with
+        the decision and stating the tradeoffs and risks plainly.</li>
+      <li>Backed the recommendation with a robustness test, so leaders can see which picks hold up under different priorities
+        and which are judgment calls.</li>
+      <li>Proposed a phased plan (highest-confidence sites first) and named what the data can't answer (rent, visibility,
+        office attendance), with a concrete next step for each.</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Built by me with public data: U.S. Census Bureau (ACS, LODES, TIGER) and © OpenStreetMap contributors.
+  An independent portfolio project, not affiliated with any coffee company.
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ---------------- page selectors (hash routing, so each page has a shareable link) ---------------- */
+const PAGES = ["overview", "quality", "scoring", "memo"];
+function show(page) {
+  if (!PAGES.includes(page)) page = "overview";
+  document.querySelectorAll(".page").forEach(s => s.classList.toggle("active", s.id === "page-" + page));
+  document.querySelectorAll("nav a").forEach(a => {
+    const on = a.dataset.nav === page;
+    a.classList.toggle("active", on);
+    on ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current");
+  });
+  window.scrollTo({ top: 0 });
+  if (page === "scoring") initMainMap();
+  if (page === "memo") initMemoMap();
+}
+window.addEventListener("hashchange", () => show(location.hash.slice(1)));
+
+/* ---------------- code links: GitHub file view when hosted on GitHub Pages, relative path locally ---------------- */
+(function linkSources() {
+  let base = "";
+  const host = location.hostname;
+  if (host.endsWith("github.io")) {
+    const user = host.split(".")[0];
+    const first = location.pathname.split("/").filter(Boolean)[0];
+    const repo = first && !first.includes(".") ? first : `${user}.github.io`;
+    base = `https://github.com/${user}/${repo}/blob/main/`;
+  }
+  document.querySelectorAll("[data-src]").forEach(a => { a.href = base + a.dataset.src; a.target = "_blank"; a.rel = "noopener"; });
+})();
+
+/* ---------------- maps ---------------- */
+const RAMP = ["#d3f2e8", "#b8d9b8", "#7fb99a", "#3d8c68", "#006241"];  // mint -> brand green, one hue family
+const NOT_SCORED = "#e6e6e2";
+const TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+const TILE_ATTR = "Tiles © Esri | Data: U.S. Census Bureau, © OpenStreetMap contributors";
+let dataPromise, mainMap, memoMap;
+
+function loadData() {
+  dataPromise ??= Promise.all(["assets/tracts.geojson", "assets/cafes.geojson", "assets/picks.json"]
+    .map(u => fetch(u).then(r => { if (!r.ok) throw new Error(u); return r.json(); })));
+  return dataPromise;
+}
+function pinIcon(n) { return L.divIcon({ className: "", html: `<div class="pin">${n}</div>`, iconSize: [28, 28], iconAnchor: [14, 14] }); }
+function mapError(el) { el.innerHTML = '<p style="padding:20px">Map data could not load. If you opened this file directly, ' +
+  'serve the folder instead: <code>python -m http.server</code>, then visit http://localhost:8000.</p>'; }
+
+function initMainMap() {
+  if (mainMap) { setTimeout(() => mainMap.invalidateSize(), 50); return; }
+  mainMap = L.map("map", { scrollWheelZoom: false, zoomSnap: 0.25 }).setView([39.0, -94.6], 10);
+  L.tileLayer(TILES, { attribution: TILE_ATTR, maxZoom: 16 }).addTo(mainMap);
+  loadData().then(([tracts, cafes, picks]) => {
+    const scores = tracts.features.filter(f => f.properties.scored).map(f => f.properties.score).sort((a, b) => a - b);
+    const nScored = scores.length;
+    const breaks = [0.2, 0.4, 0.6, 0.8].map(q => scores[Math.floor(q * (nScored - 1))]);
+    const color = s => RAMP[breaks.filter(b => s > b).length];
+
+    const layer = L.geoJSON(tracts, {
+      style: f => ({ fillColor: f.properties.scored ? color(f.properties.score) : NOT_SCORED,
+                     fillOpacity: .85, color: "#ffffff", weight: .6 }),
+      onEachFeature: (f, l) => {
+        const p = f.properties;
+        l.bindTooltip(p.scored
+          ? `<b>Tract ${p.tract}</b>, ${p.county}<br>Score <b>${p.score.toFixed(1)}</b> · rank ${p.rank} of ${nScored}<br>` +
+            `Income $${Math.round(p.median_income).toLocaleString()} · growth ${p.growth_pct > 0 ? "+" : ""}${p.growth_pct}%<br>` +
+            `${p.reach_pop_10.toLocaleString()} residents within 10 min · ${p.cafes_10} coffee shops`
+          : `<b>Tract ${p.tract}</b>, ${p.county}<br>No residents, not scored`, { sticky: true });
+        l.on({ mouseover: e => e.target.setStyle({ weight: 2.5, color: "#00432c" }),
+               mouseout: e => layer.resetStyle(e.target) });
+      }
+    }).addTo(mainMap);
+    mainMap.invalidateSize();
+    mainMap.fitBounds(layer.getBounds(), { padding: [4, 4] });
+
+    const cafeLayer = L.geoJSON(cafes, {
+      pointToLayer: (f, ll) => L.circleMarker(ll, { radius: 4, weight: 1.5, color: "#fff", fillOpacity: 1,
+        fillColor: f.properties.segment === "chain" ? "#eb6834" : "#6250d6" })
+        .bindTooltip(`${f.properties.std_name || "Unnamed cafe"} (${f.properties.segment})`)
+    });
+    picks.forEach(p => L.marker([p.lat, p.lon], { icon: pinIcon(p.pick), zIndexOffset: 1000 })
+      .bindTooltip(`<b>Pick ${p.pick}: ${p.place}</b><br>${p.near}<br>Score ${p.score} · rank ${p.rank}`)
+      .addTo(mainMap));
+    L.control.layers(null, { "Coffee competitors": cafeLayer }, { collapsed: false }).addTo(mainMap);
+
+    const legend = L.control({ position: "bottomright" });
+    legend.onAdd = () => {
+      const d = L.DomUtil.create("div", "legend");
+      const labels = ["Top 20%", "60-80th pct", "40-60th pct", "20-40th pct", "Bottom 20%"];
+      d.innerHTML = "<b>Suitability score</b><br>" +
+        labels.map((t, i) => `<i style="background:${RAMP[4 - i]}"></i>${t}`).join("<br>") +
+        `<br><i style="background:${NOT_SCORED}"></i>Not scored (no residents)` +
+        `<br><i class="c" style="background:#eb6834"></i>Chain cafe <i class="c" style="background:#6250d6;margin-left:8px"></i>Independent`;
+      return d;
+    };
+    legend.addTo(mainMap);
+  }).catch(() => mapError(document.getElementById("map")));
+}
+
+function initMemoMap() {
+  if (memoMap) { setTimeout(() => memoMap.invalidateSize(), 50); return; }
+  memoMap = L.map("memoMap", { scrollWheelZoom: false, zoomControl: true });
+  L.tileLayer(TILES, { attribution: TILE_ATTR, maxZoom: 16 }).addTo(memoMap);
+  loadData().then(([, , picks]) => {
+    const pts = picks.map(p => L.marker([p.lat, p.lon], { icon: pinIcon(p.pick) })
+      .bindTooltip(`<b>${p.pick}. ${p.place}</b><br>${p.near}`, { direction: "right", offset: [14, 0] }).addTo(memoMap));
+    memoMap.fitBounds(L.featureGroup(pts).getBounds(), { padding: [40, 40] });
+  }).catch(() => mapError(document.getElementById("memoMap")));
+}
+
+show(location.hash.slice(1));  // last, so the map functions and their state above are defined first
+</script>
+</body>
+</html>

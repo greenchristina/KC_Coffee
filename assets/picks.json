@@ -1,0 +1,47 @@
+[
+ {
+  "pick": 1,
+  "place": "Overland Park",
+  "near": "West 159th Street & Antioch Road",
+  "lat": 38.84,
+  "lon": -94.67702,
+  "score": 78.3,
+  "rank": 1.0
+ },
+ {
+  "pick": 2,
+  "place": "Overland Park",
+  "near": "West 119th Street & Nall Avenue",
+  "lat": 38.91452,
+  "lon": -94.65442,
+  "score": 78.2,
+  "rank": 2.0
+ },
+ {
+  "pick": 3,
+  "place": "Lenexa",
+  "near": "Pflumm Road & College Boulevard",
+  "lat": 38.93103,
+  "lon": -94.74619,
+  "score": 76.8,
+  "rank": 5.0
+ },
+ {
+  "pick": 4,
+  "place": "Olathe",
+  "near": "South Ridgeview Road & East 151st Street",
+  "lat": 38.86278,
+  "lon": -94.79312,
+  "score": 76.5,
+  "rank": 6.0
+ },
+ {
+  "pick": 5,
+  "place": "Kansas City",
+  "near": "Grand Boulevard & Main Street",
+  "lat": 39.10225,
+  "lon": -94.58077,
+  "score": 71.6,
+  "rank": 16.0
+ }
+]

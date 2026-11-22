@@ -1,0 +1,57 @@
+name,std_name,segment,coffee_competitor,note
+Starbucks,Starbucks,chain,1,
+Scooter's Coffee,Scooter's Coffee,chain,1,
+Scooters,Scooter's Coffee,chain,1,spelling variant (report check 7)
+Scooter's Coffeehouse,Scooter's Coffee,chain,1,spelling variant (report check 7)
+Dutch Bros. Coffee,Dutch Bros Coffee,chain,1,
+Dutch Bros Coffee,Dutch Bros Coffee,chain,1,spelling variant (report check 7)
+Caribou Coffee,Caribou Coffee,chain,1,
+7 Brew,7 Brew,chain,1,
+7 Brew Coffee,7 Brew,chain,1,spelling variant
+7 Brew Drive Thru Coffee,7 Brew,chain,1,spelling variant
+PJ's Coffee of New Orleans,PJ's Coffee,chain,1,
+Summer Moon Coffee,Summer Moon Coffee,chain,1,
+Messenger Coffee Co,Messenger Coffee,independent,1,local multi-unit
+Messenger Coffee Co. + Ibis Bakery,Messenger Coffee,independent,1,local multi-unit
+The Roasterie Roasting Facility,The Roasterie,independent,1,local multi-unit
+Revocup Coffee Roasters,Revocup,independent,1,local multi-unit
+Revocup Lenexa Coffee Shop,Revocup,independent,1,local multi-unit
+Crows Coffee Red Bridge,Crows Coffee,independent,1,local multi-unit
+Cafe Corazon,Café Corazón,independent,1,accent variant
+PT's Coffee Roasting Company,PT's Coffee,independent,1,spelling variant
+Parisi Café,Parisi Coffee,independent,1,local multi-unit
+Parisi Pronto,Parisi Coffee,independent,1,local multi-unit
+Filling Station Coffee,Filling Station,independent,1,spelling variant
+The Filling Station,Filling Station,independent,1,spelling variant
+Front Range Coffeehouse & Provisions,Front Range Coffee,independent,1,spelling variant
+Spokes Cafe,Spokes,independent,1,spelling variant
+Spokes Coffee and Café,Spokes,independent,1,spelling variant
+Thou Mayest - Nelson Atkins,Thou Mayest,independent,1,local multi-unit
+Mildreds,Mildred's,independent,1,spelling variant
+Over Flow Coffee House,Overflow Coffee,independent,1,spelling variant
+Gusto! Coffee Shop,Gusto Coffee,independent,1,spelling variant
+Gusto Coffee Bistro,Gusto Coffee,independent,1,spelling variant
+City Market Coffee Roasters,City Market Coffee House,independent,1,spelling variant
+BBQ To Go,BBQ To Go,other,0,restaurant tagged as cafe
+Royal Gyros,Royal Gyros,other,0,restaurant tagged as cafe
+Wrap It Up,Wrap It Up,other,0,restaurant tagged as cafe
+Big Biscuit,Big Biscuit,other,0,breakfast restaurant
+Hy-Vee Market Grille,Hy-Vee Market Grille,other,0,grocery-store restaurant
+Hookah Cafe,Hookah Cafe,other,0,hookah lounge
+Crumbl Cookies,Crumbl Cookies,other,0,cookie shop
+Bizz and Weezy Confections,Bizz and Weezy Confections,other,0,confectionery
+Fairway Creamery,Fairway Creamery,other,0,ice cream
+Parkville Wine House,Parkville Wine House,other,0,wine bar
+Ad Astra Nutrition,Ad Astra Nutrition,other,0,shake/nutrition shop
+Kearney Nutrition,Kearney Nutrition,other,0,shake/nutrition shop
+Evolve Juicery & Paleo Kitchen,Evolve Juicery & Paleo Kitchen,other,0,juice bar
+Ruby Jean's Juicery,Ruby Jean's Juicery,other,0,juice bar
+Chatime,Chatime,other,0,bubble tea
+Coco,CoCo,other,0,bubble tea
+Kung Fu Tea,Kung Fu Tea,other,0,bubble tea
+Ding Tea,Ding Tea,other,0,bubble tea
+Dragonfly Tea Zone,Dragonfly Tea Zone,other,0,bubble tea
+Tsaocaa Bubble Tea,Tsaocaa Bubble Tea,other,0,bubble tea
+QZ Poke Ramen and Boba Tea,QZ Poke Ramen and Boba Tea,other,0,restaurant / bubble tea
+Tian Tea House,Tian Tea House,other,0,tea house
+Tea Drops,Tea Drops,other,0,tea retailer
